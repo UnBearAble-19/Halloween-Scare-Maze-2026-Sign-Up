@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halloween Maze Sign-Up</title>
+<style>
+:root{--bg:#fff;--fg:#1c1b19;--mut:#6b6a66;--card:#f4f2ee;--line:#d9d6cf;--acc:#c2410c}
+@media (prefers-color-scheme:dark){:root{--bg:#17161a;--fg:#f1efe9;--mut:#a09e98;--card:#24222a;--line:#3a3842;--acc:#fb923c}}
+html{color-scheme:light dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0 0 4px}p{margin:0 0 12px}.mut{color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+label.l{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.roles label{display:block;border:2px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);cursor:pointer}
+.roles input{position:absolute;opacity:0}
+.roles label:has(input:checked){border-color:var(--acc)}
+.roles label:has(input:focus-visible){outline:2px solid var(--acc)}
+.roles b{display:block;font-size:17px}
+button{width:100%;margin-top:14px;padding:12px;font:inherit;font-weight:600;border:0;border-radius:10px;background:var(--acc);color:#fff;cursor:pointer}
+button:disabled{opacity:.5}
+#out{margin-top:12px;font-size:15px}
+.hp{position:absolute;left:-9999px}
+</style></head>
+<body><main>
+<h1>Halloween Maze Sign-Up</h1>
+<p class="mut">Police vs zombie invasion on 31 October. Pick a role and add your name. Spots are first come, first served: 3 guards and 2 zombies.</p>
+
+<form id="f" class="card" action="https://formspree.io/f/xdeaqrwe" method="POST">
+  <label class="l" for="name">Your name</label>
+  <input type="text" id="name" name="name" maxlength="30" required autocomplete="off">
+
+  <label class="l" for="parent_phone">Parent or guardian phone number</label>
+  <input type="tel" id="parent_phone" name="parent_phone" required inputmode="tel" autocomplete="off" pattern="[0-9+()\s\-]{10,16}" title="Enter a phone number: 10 to 16 digits, spaces, dashes or a + sign" style="width:100%;box-sizing:border-box;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)">
+
+  <label class="l" for="phone">Your phone number (optional)</label>
+  <input type="tel" id="phone" name="phone" inputmode="tel" autocomplete="tel" pattern="[0-9+()\s\-]{10,16}" title="Enter a phone number: 10 to 16 digits, spaces, dashes or a + sign" style="width:100%;box-sizing:border-box;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)">
+
+  <label class="l">Pick a role</label>
+  <div class="roles">
+    <label><input type="radio" name="role" value="Guard" required><b>Guard</b><span class="mut">Costume provided.</span></label>
+    <label><input type="radio" name="role" value="Zombie"><b>Zombie</b><span class="mut">Bring your own costume.</span></label>
+  </div>
+
+  <div id="sizebox" hidden>
+    <label class="l" for="size">T-shirt size (for the guard costume)</label>
+    <select id="size" name="size" disabled><option value="" selected disabled>Choose a size</option><option>S</option><option>M</option><option>L</option><option>XL</option></select>
+  </div>
+
+  <input class="hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <input type="hidden" name="_subject" value="Maze sign-up">
+  <button type="submit" id="go">Sign me up</button>
+  <div id="out" role="status"></div>
+</form>
+
+<p class="mut">Guards point and guide, they never grab or chase. Anyone can say “stop” at any time and be walked out.</p>
+</main>
+<script>
+const f=document.getElementById("f"),out=document.getElementById("out"),go=document.getElementById("go");
+const sizeSel=document.getElementById("size");
+function syncSize(){
+  const g=f.role.value==="Guard";
+  document.getElementById("sizebox").hidden=!g;
+  sizeSel.disabled=!g;
+  sizeSel.required=g;
+}
+f.addEventListener("change",syncSize);
+f.addEventListener("submit",async e=>{
+  e.preventDefault();
+  go.disabled=true;out.textContent="Sending…";
+  try{
+    const db=await claude.use("db");const d=Object.fromEntries(new FormData(f));delete d._gotcha;delete d._subject;d.at=Date.now();if(!db)throw 0;await db.doc("signups/"+d.at+"-"+Math.random().toString(36).slice(2,6)).set(d);const r={ok:true};
+    if(r.ok){f.reset();syncSize();out.textContent="You’re in. We’ll message you if that role is already full. See you on the night.";}
+    else{out.textContent="That didn’t send. Try again, or message us directly.";}
+  }catch(err){out.textContent="That didn’t send. Check your connection and try again.";}
+  go.disabled=false;
+});
+</script></body></html>
